@@ -30,7 +30,7 @@ function initAutocomplete() {
         let lng = results[0].geometry.location.lng(); 
 
         //get timezone from Time Zone API 
-        fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=***`)
+        fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=AIzaSyDDGqCMjZnysLB1EW4n8Ze2dOLkPPN6SjI`) //security note: accepting risk on hardcoded cred for now.
             .then(function(response) {
                 return response.json();
             })
