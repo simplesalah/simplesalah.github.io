@@ -1,6 +1,3 @@
----
-permalink: /index.html
----
 # Simple Salah
 
 Simple Salah aims to serve a fast, ad-free, and clutter-free athan app.
