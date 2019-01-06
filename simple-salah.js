@@ -1,5 +1,5 @@
-const locationKey = 'simplesalah_locations';
-const lastLocationKey = 'simplesalah_last_location';
+const locationKey = 'simplesalah_locations_v2';
+const lastLocationKey = 'simplesalah_last_location_v2';
 
 function initAutocomplete() {
     let input = document.getElementById('location-input');
@@ -7,14 +7,14 @@ function initAutocomplete() {
     let geocoder = new google.maps.Geocoder;
 
     autocomplete.addListener('place_changed', function() {
-        clearTimings(); //there's a delay before new timings load. During it, we want to display blank instead of incorrect timings.
-        document.getElementById('currLocationButton').click(); //close dropdown menu
-
         let place = autocomplete.getPlace();
         if (!place.place_id) { 
             alert('Error: please select from suggestions.'); 
             return; 
         }
+
+        clearTimings(); //there's a delay before new timings load. During it, we want to display blank instead of incorrect timings.
+        document.getElementById('currLocationButton').click(); //close dropdown menu
 
         document.getElementById('location-input').value = '';
 
@@ -37,30 +37,32 @@ function initAutocomplete() {
             .then(function(tzJson) {
                 //FIXME: add error handling for failed requests, like ACCESS_DENIED from GCP. (E.g. w/ misconfigured referrer restrictions.)
                 let tz = tzJson.timeZoneId;
-                addLocation(placeName, lat, lng, tz);
-                loadLocation(placeName);
+                let locIndex = addLocation(placeName, lat, lng, tz);
+                loadLocation(locIndex);
             });
         });
     });
 }
 
+/** Returns index of new item. */
 function addLocation(name, lat, lng, tz) {
     let locations = JSON.parse(localStorage.getItem(locationKey));
-    if (locations === null) locations = {}; 
-    locations[name] = {'name': name, 'lat': lat, 'lng': lng, 'tz': tz};
+    if (locations === null) locations = []; 
+    let locIndex = locations.push( {'name': name, 'lat': lat, 'lng': lng, 'tz': tz} ) - 1;
     localStorage.setItem(locationKey, JSON.stringify(locations));
-    populateLocations();
+    redrawLocationsDropdown();
+    return locIndex;
 }
 
-function removeLocation(name) {
+function removeLocation(locIndex) {
     let locations = JSON.parse(localStorage.getItem(locationKey));
-    delete locations[name];
-    localStorage.setItem(locationKey, JSON.stringify(locations));
+    locations.splice(locIndex, 1)[0];
+    localStorage.setItem(locationKey, JSON.stringify(locations)); 
     document.getElementById('currLocationButton').click(); //re-open menu (for visible effect of it never closing). kludge FIXME?
-    populateLocations();
-    if (name == document.getElementById('currLocationButton').innerText) {
-        if (Object.keys(locations).length > 0) {
-            loadLocation(Object.keys(locations)[0]);
+    redrawLocationsDropdown();
+    if (locIndex == JSON.parse(localStorage.getItem(lastLocationKey))) {
+        if (locations.length > 0) {
+            loadLocation(0);
         }  
         else {
             clearAllLocations();
@@ -68,20 +70,20 @@ function removeLocation(name) {
     }
 }
 
-function loadLocation(name) { 
+function loadLocation(locIndex) { 
     let locations = JSON.parse(localStorage.getItem(locationKey));
 
-    if (name === null || !(name in locations)) 
+    if (locIndex === null || locIndex >= locations.length) 
         return; 
 
-    let loc = locations[name]; 
+    let loc = locations[locIndex]; 
     let dt = luxon.DateTime.local().setZone(loc.tz); 
 
     //paint timings
     redrawTimings(loc, dt);
 
     //update last location 
-    localStorage.setItem(lastLocationKey, loc.name);
+    localStorage.setItem(lastLocationKey, locIndex);
 
     //update dropdown label 
     document.getElementById('currLocationButton').innerText = loc.name;
@@ -129,20 +131,21 @@ function clearTimings() {
 }
 
 function loadLastLocation() {
-    let lastLocationName = localStorage.getItem(lastLocationKey);
-    if (lastLocationName !== null) { 
-        loadLocation(lastLocationName);
+    let lastLocationIndex = localStorage.getItem(lastLocationKey);
+    if (lastLocationIndex !== null) { 
+        lastLocationIndex = parseInt(lastLocationIndex);
+        loadLocation(lastLocationIndex);
     }
 }
 
-function populateLocations() {
+function redrawLocationsDropdown() {
     let locations = JSON.parse(localStorage.getItem(locationKey));
-    //if empty or null, display Add loc box? 
-    document.getElementById('locationDropdownElements').innerHTML = ''; //Is this the most UI-friendly? Or diff & add? FIXME
-    for (let name in locations) {
-        if (locations.hasOwnProperty(name)) {
-            addDropdownLoc(name);
-        }
+    if (locations === null) {
+        locations = [];
+    }
+    document.getElementById('locationDropdownElements').innerHTML = ''; //is this the most efficient way?
+    for (let i=0; i<locations.length; i++) {
+        addDropdownLoc(locations[i].name, i);  
     }
 }
 
@@ -155,25 +158,27 @@ function clearAllLocations() {
     clearTimings();
 }
 
-function addDropdownLoc(name) {
-    let newLoc = createDropdownLoc(name);
+function addDropdownLoc(name, locIndex) {
+    let newLoc = createDropdownLoc(name, locIndex);
     let locElements = document.getElementById('locationDropdownElements');
     locElements.appendChild(newLoc);
 }
 
-function createDropdownLoc(name) {
+function createDropdownLoc(name, locIndex) {
+    locIndex = parseInt(locIndex); //XSS protection
+
     let removeButtonIcon = document.createElement('span');
     removeButtonIcon.setAttribute('class', 'fas fa-minus-circle');
 
     let removeButton = document.createElement('span');
     removeButton.setAttribute('style', 'color: Tomato;');
     removeButton.setAttribute('class', 'float-right ml-1');
-    removeButton.setAttribute('onclick', `removeLocation("${name}")`);
+    removeButton.setAttribute('onclick', `removeLocation(${locIndex})`);
     removeButton.appendChild(removeButtonIcon);
 
     let locLink = document.createElement('a');
     locLink.appendChild(document.createTextNode(name));
-    locLink.setAttribute('onclick', `loadLocation("${name}")`);
+    locLink.setAttribute('onclick', `loadLocation(${locIndex})`);
 
     let dropdownItem = document.createElement('span');
     dropdownItem.appendChild(locLink);
@@ -183,7 +188,7 @@ function createDropdownLoc(name) {
 }
 
 function removeObsoleteValues() {
-    obsoleteLocalStorage = ['city_name'];
+    obsoleteLocalStorage = ['city_name','simplesalah_locations','simplesalah_last_location'];
     for (let i=0; i<obsoleteLocalStorage.length; i++) {
         localStorage.removeItem(obsoleteLocalStorage[i]);
     }
