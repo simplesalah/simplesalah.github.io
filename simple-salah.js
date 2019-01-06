@@ -60,7 +60,9 @@ function removeLocation(locIndex) {
     localStorage.setItem(locationKey, JSON.stringify(locations)); 
     document.getElementById('currLocationButton').click(); //re-open menu (for visible effect of it never closing). kludge FIXME?
     redrawLocationsDropdown();
-    if (locIndex == JSON.parse(localStorage.getItem(lastLocationKey))) {
+
+    let lastLocIndex = JSON.parse(localStorage.getItem(lastLocationKey));
+    if (lastLocIndex == locIndex) {
         if (locations.length > 0) {
             loadLocation(0);
         }  
@@ -68,12 +70,15 @@ function removeLocation(locIndex) {
             clearAllLocations();
         }
     }
+    else if (lastLocIndex > locIndex) {
+        localStorage.setItem(lastLocationKey, lastLocIndex - 1);
+    }
 }
 
 function loadLocation(locIndex) { 
     let locations = JSON.parse(localStorage.getItem(locationKey));
 
-    if (locIndex === null || locIndex >= locations.length) 
+    if (locIndex === null || isNaN(locIndex) || locIndex >= locations.length) //TODO also return if not an int. 
         return; 
 
     let loc = locations[locIndex]; 
