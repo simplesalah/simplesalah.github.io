@@ -1,5 +1,43 @@
 const locationKey = 'simplesalah_locations_v2';
 const lastLocationKey = 'simplesalah_last_location_v2';
+const settingsKey = 'simplesalah_settings'; 
+const methodsEnum = Object.freeze({
+    'ISNA': 'ISNA',
+    'MWL': 'Muslim World League',
+    'Makkah': 'Umm al-Qura University',
+    'Karachi': 'Univ. of Islamic Sciences, Karachi',
+    '15_18': 'Both 15° & 18°'
+});
+
+function main() {
+    setEventHandlers(); 
+    drawMethodSettingsMenu();
+    loadLastLocation();
+    loadSettings(); 
+    redrawLocationsDropdown();
+    removeObsoleteValues();
+}
+
+function setEventHandlers() {
+    document.getElementById("clearAllLocs").onclick = clearAllLocations;
+}
+
+function drawMethodSettingsMenu() {
+    let dropdownButton = document.getElementById('fajrIshaDropdownButton');
+    let elements = document.getElementById('fajrIshaDropdownElements');
+    Object.keys(methodsEnum).forEach(function(key) {
+        let label = methodsEnum[key];
+        let a = document.createElement('a');
+        a.innerText = label;
+        a.onclick = function() {
+            dropdownButton.innerText = label; 
+            dropdownButton.setAttribute('data-settingFajrIsha', key);
+        };
+        a.setAttribute('class', 'dropdown-item');
+        a.setAttribute('href', '#');
+        elements.appendChild(a);
+    });
+}
 
 function initAutocomplete() {
     let input = document.getElementById('location-input');
@@ -141,6 +179,23 @@ function loadLastLocation() {
         lastLocationIndex = parseInt(lastLocationIndex);
         loadLocation(lastLocationIndex);
     }
+}
+
+function loadSettings() {
+    let settings = JSON.parse(localStorage.getItem(settingsKey));
+
+    if (settings === null) {
+        settings = {fajr_isha: 'ISNA', asr_shafii: true, asr_hanafi: false};
+        localStorage.setItem(settingsKey, JSON.stringify(settings));
+    }
+
+    document.getElementById('fajrIshaDropdownButton').innerText = methodsEnum[settings.fajr_isha];
+    document.getElementById('setting_shafii').checked = settings.asr_shafii;
+    document.getElementById('setting_hanafi').checked = settings.asr_hanafi;
+}
+
+function saveSettings() {
+    
 }
 
 function redrawLocationsDropdown() {
