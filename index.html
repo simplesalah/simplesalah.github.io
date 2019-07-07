@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="simple-salah.css">
   </head>
 
-  <body onload="loadLastLocation();redrawLocationsDropdown();removeObsoleteValues()">
+  <body onload="main()">
     <div class="container">
 
       <div class="row justify-content-center mt-1">
@@ -20,9 +20,6 @@
       </div>
     
       <div class="row align-items-center mb-1">
-        <!--<div class="col-xs-auto font-weight-bold">
-          City: &nbsp;
-        </div>-->
         <div class="col">
             <div class="dropdown">
                 <button id="currLocationButton" class="btn btn-primary dropdown-toggle btn-block" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -33,32 +30,31 @@
                   <div id="locationDropdownDivider" class="dropdown-divider"></div>
                   <div id="locationDropdownElements"></div>
                   <div id="locationDropdownDivider" class="dropdown-divider"></div>
-                  <a class="dropdown-item text-danger" onclick="clearAllLocations()">Clear all locations</a>
+                  <a class="dropdown-item text-danger" id="clearAllLocs">Clear all locations</a>
                 </div>
               </div>
           </div>
         </div>
-        <div class="row align-items-center justify-content-center mb-3">
+
+        <div class="row align-items-center justify-content-center mb-2 mt-2">
           <div class="col-xs-auto font-weight-bold">
             Date: &nbsp;
           </div>
           <div class="col-xs-auto">
             <span id="timeCalculated"></span>
           </div>
-          <!-- 
-          <div class="col-xs-auto">
-              <button class="btn btn-info btn-sm" onclick="location.reload()">Reload</button>
-          </div>
-            -->
         </div>
 
-        <div class="row justify-content-center">
+        <div class="row justify-content-center"> <!-- Start table -->
           <div class="col-xs-auto table-responsive">
               <table class="table table-striped table-bordered text-center">
                 <tr>
                   <th scope="row">Fajr</th>
-                  <td><b>18º: </b><span id="fajr-18"></span><br/>
-                      <b>15º: </b><span id="fajr-15"></span></td>
+                  <td id="fajr"></td>
+                  <td id="fajr-15_18" style="display: none">
+                    <b>18º: </b><span id="fajr-18"></span><br/>
+                    <b>15º: </b><span id="fajr-15"></span>
+                  </td>
                 </tr>
                 <tr>
                   <th scope="row">Sunrise</th>
@@ -70,8 +66,11 @@
                 </tr>
                 <tr>
                   <th scope="row">Asr</th>
-                  <td><b>Shafi'i:</b> <span id="asr-shafi"></span><br/>
-                      <b>Hanafi:</b> <span id="asr-hanafi"></span></td>
+                  <td id="asr"></td>
+                  <td id="asr-both" style="display: none">
+                    <b>Shafi'i:</b> <span id="asr-shafi"></span><br/>
+                    <b>Hanafi:</b> <span id="asr-hanafi"></span>
+                  </td>
                 </tr>  
                 <tr>
                   <th scope="row">Maghrib</th>
@@ -79,43 +78,69 @@
                 </tr>  
                   <tr>
                   <th scope="row">Isha</th>
-                  <td><b>15º: </b><span id="isha-15"></span><br/>
-                      <b>18º: </b><span id="isha-18"></span></td>
+                  <td id="isha"></td>
+                  <td id="isha-15_18" style="display: none">
+                    <b>15º: </b><span id="isha-15"></span><br/>
+                    <b>18º: </b><span id="isha-18"></span>
+                  </td>
                 </tr>        
               </table>
           </div>
-        </div>
+        </div> <!-- End table -->
 
         <div class="row justify-content-around">
-          <!-- 
           <div class="col-xs-auto">
             <button class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#settingsModal">Settings</button>
           </div>
-          -->
           <div class="col-xs-auto">
               <button class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#aboutModal">About</button>
           </div>
         </div>
-      </div>
 
-      <div class="row justify-content-center pt-1"><div class="col-xs-auto"><small>Copyright &copy; 2017 - <script>document.write(new Date().getFullYear());</script></small></div></div>
+        <div class="row justify-content-center mt-2">
+          <div class="col-xs-auto">
+            <small>Copyright &copy; 2017 - <script>document.write(new Date().getFullYear());</script></small>
+          </div>
+        </div>
+
+        <div class="row mt-1"><div class="col" id="alertArea"></div></div>
+
+      </div> <!-- end of main container -->
 
       <!-- Modals -->
       <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModal" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title" id="exampleModalLongTitle">Settings</h5>
+                <h4 class="modal-title" id="exampleModalLongTitle">Settings</h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
               </div>
               <div class="modal-body">
-                Coming soon...
+                <h5>Fajr & Isha:</h5> 
+                <div class="dropdown">
+                  <button class="btn btn-outline-dark dropdown-toggle" type="button" id="fajrIshaDropdownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+                  <div class="dropdown-menu" id="fajrIshaDropdownElements" aria-labelledby="fajrIshaDropdownElements"></div>
+                </div>
+                <br>
+                <h5>Asr:</h5> 
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="" id="setting_hanafi">
+                  <label class="form-check-label" for="setting_hanafi">
+                    Hanafi
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="" id="setting_shafii">
+                  <label class="form-check-label" for="setting_shafii">
+                    Shafi'i, Maliki, Hanbali 
+                  </label>
+                </div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Save changes</button>
+                <button id="settingsSaveButton" type="button" class="btn btn-primary">Save changes</button>
               </div>
             </div>
           </div>
@@ -125,7 +150,7 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h5 class="modal-title" id="exampleModalLongTitle">About</h5>
+                  <h4 class="modal-title" id="exampleModalLongTitle">About</h4>
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                   </button>
