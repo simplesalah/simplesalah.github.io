@@ -35,6 +35,9 @@ function setEventHandlers() {
     $('#locationsDropdown').on('shown.bs.dropdown', function () {
         document.getElementById('location-input').focus();
     });
+    $('#locationsDropdown').on('hidden.bs.dropdown', function () {
+        document.getElementById('location-input').value = '';
+    });
 }
 
 function drawMethodSettingsMenu() {
