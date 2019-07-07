@@ -25,6 +25,7 @@ function main() {
     let locations = JSON.parse(localStorage.getItem(locationKey));
     if (locations === null || locations === []) {
         $('#currLocationButton').dropdown('toggle');
+        document.getElementById('location-input').focus();
     }
 }
 
