@@ -18,6 +18,7 @@ function main() {
     setEventHandlers(); 
     drawMethodSettingsMenu();
     loadLastLocation();
+    setInterval(loadLastLocation, 60000);
     redrawLocationsDropdown();
     removeObsoleteValues();
 }
