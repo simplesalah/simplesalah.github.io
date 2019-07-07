@@ -25,7 +25,6 @@ function main() {
     let locations = JSON.parse(localStorage.getItem(locationKey));
     if (locations === null || locations === []) {
         $('#currLocationButton').dropdown('toggle');
-        document.getElementById('location-input').focus();
     }
 }
 
@@ -33,6 +32,9 @@ function setEventHandlers() {
     document.getElementById("clearAllLocs").onclick = clearAllLocations;
     $('#settingsModal').on('show.bs.modal', loadSettings);
     $('#settingsSaveButton').on('click', saveSettings);
+    $('#locationsDropdown').on('shown.bs.dropdown', function () {
+        document.getElementById('location-input').focus();
+    });
 }
 
 function drawMethodSettingsMenu() {
