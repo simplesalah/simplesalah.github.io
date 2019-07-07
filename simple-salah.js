@@ -2,7 +2,7 @@ const locationKey = 'simplesalah_locations_v2';
 const lastLocationKey = 'simplesalah_last_location_v2';
 const settingsKey = 'simplesalah_settings'; 
 const methodsEnum = Object.freeze({
-    'ISNA': 'ISNA',
+    'ISNA': 'ISNA (default)',
     'MWL': 'Muslim World League',
     'Makkah': 'Umm al-Qura University',
     'Karachi': 'Univ. of Islamic Sciences, Karachi',
@@ -121,6 +121,7 @@ function removeLocation(locIndex) {
 
 function loadLocation(locIndex) { 
     let locations = JSON.parse(localStorage.getItem(locationKey));
+    let settings = JSON.parse(localStorage.getItem(settingsKey)) || defaultSettings;
 
     if (locIndex === null || isNaN(locIndex) || locIndex >= locations.length) //TODO also return if not an int. 
         return; 
@@ -129,7 +130,7 @@ function loadLocation(locIndex) {
     let dt = luxon.DateTime.local().setZone(loc.tz); 
 
     //paint timings
-    redrawTimings(loc, dt);
+    redrawTimings(loc, dt, settings.fajr_isha, settings.asr_shafii, settings.asr_hanafi);
 
     //update last location 
     localStorage.setItem(lastLocationKey, locIndex);
@@ -141,30 +142,104 @@ function loadLocation(locIndex) {
     document.getElementById('timeCalculated').innerText = `${dt.weekdayShort} ${dt.monthShort} ${dt.day}, ${dt.year}`;
 }
 
-//FIXME: this is kludge code. Switch to dynamically generated elements instead of static table? May help with settings page. And might be cleaner.
-function redrawTimings(loc, dt) {
-    let tzOffset = dt.offset/60; //TODO: import Luxon here instead of in HTML? 
-    let timings = JSON.stringify(prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h'), null, 4);
+function redrawTimings(loc, dt, fajrIshaMethod, asrShafii, asrHanafi) {
+
+    let tzOffset = dt.offset/60; 
 
     //calculate times
-    var date = new Date();
-    prayTimes.adjust( {fajr: 15, asr: 'Hanafi', isha: 15} );
-    var salah_times_hanafi_15 = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
-    prayTimes.adjust( {fajr: 18, asr: 'Hanafi', isha: 18} );
-    var salah_times_hanafi_18 = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
-    prayTimes.adjust( {fajr: 15, asr: 'Standard', isha: 15} );
-    var salah_times_shafi_15 = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
+    let timings = {};
+    if (fajrIshaMethod === '15_18') {
 
-    //update times
-    document.getElementById('fajr-15').innerText = salah_times_shafi_15['fajr'];
-    document.getElementById('fajr-18').innerText = salah_times_hanafi_18['fajr'];
-    document.getElementById('sunrise').innerText = salah_times_shafi_15['sunrise'];
-    document.getElementById('dhuhr').innerText = salah_times_shafi_15['dhuhr'];
-    document.getElementById('asr-shafi').innerText = salah_times_shafi_15['asr'];
-    document.getElementById('asr-hanafi').innerText = salah_times_hanafi_15['asr'];
-    document.getElementById('maghrib').innerText = salah_times_shafi_15['maghrib'];
-    document.getElementById('isha-15').innerText = salah_times_shafi_15['isha'];
-    document.getElementById('isha-18').innerText = salah_times_hanafi_18['isha'];
+        prayTimes.adjust( {fajr: 15, asr: 'Standard', isha: 15} );
+        let shafii_15 = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
+
+        timings.fajr_15 = shafii_15.fajr;
+        timings.sunrise = shafii_15.sunrise;
+        timings.dhuhr = shafii_15.dhuhr;
+        timings.asr_shafii = shafii_15.asr;
+        timings.maghrib = shafii_15.maghrib;
+        timings.isha_15 = shafii_15.isha;
+
+        prayTimes.adjust( {fajr: 18, asr: 'Hanafi', isha: 18} );
+        let hanafi_18 = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
+
+        timings.fajr_18 = hanafi_18.fajr;
+        timings.asr_hanafi = hanafi_18.asr;
+        timings.isha_18 = hanafi_18.isha;
+
+        if (asrShafii && !asrHanafi) timings.asr = shafii_15.asr;
+        if (asrHanafi && !asrShafii) timings.asr = hanafi_18.asr; 
+    }
+    else {
+        prayTimes.setMethod(fajrIshaMethod);
+
+        let calc; 
+
+        if (asrHanafi) {
+            prayTimes.adjust( {asr: 'Hanafi'} );
+            calc = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
+            
+            if (!asrShafii) 
+                timings.asr = calc.asr;
+            else
+                timings.asr_hanafi = calc.asr;
+        }
+        
+        if (asrShafii) {
+            prayTimes.adjust( {asr: 'Standard'} );
+            calc = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
+
+            if (!asrHanafi) 
+                timings.asr = calc.asr;
+            else
+                timings.asr_shafii = calc.asr;
+        }
+
+        if (!asrHanafi && !asrShafii)
+            calc = prayTimes.getTimes(new Date(), [loc.lat,loc.lng], tzOffset, 0, '12h');
+
+        timings.fajr = calc.fajr;
+        timings.sunrise = calc.sunrise;
+        timings.dhuhr = calc.dhuhr;
+        timings.maghrib = calc.maghrib;
+        timings.isha = calc.isha;
+    }
+
+    //update display
+    if (fajrIshaMethod === '15_18') {
+        document.getElementById('fajr-15_18').removeAttribute('style');
+        document.getElementById('fajr').setAttribute('style', 'display: none');
+        document.getElementById('fajr-15').innerText = timings.fajr_15;
+        document.getElementById('fajr-18').innerText = timings.fajr_18;
+
+        document.getElementById('isha-15_18').removeAttribute('style');
+        document.getElementById('isha').setAttribute('style', 'display: none');
+        document.getElementById('isha-15').innerText = timings.isha_15;
+        document.getElementById('isha-18').innerText = timings.isha_18;
+    }
+    else {
+        document.getElementById('fajr').removeAttribute('style');
+        document.getElementById('fajr-15_18').setAttribute('style', 'display: none');
+        document.getElementById('fajr').innerText = timings.fajr;
+
+        document.getElementById('isha').removeAttribute('style');
+        document.getElementById('isha-15_18').setAttribute('style', 'display: none');
+        document.getElementById('isha').innerText = timings.isha;
+    }
+    if (asrHanafi && asrShafii) {
+        document.getElementById('asr-both').removeAttribute('style');
+        document.getElementById('asr').setAttribute('style', 'display: none');
+        document.getElementById('asr-shafi').innerText = timings.asr_shafii;
+        document.getElementById('asr-hanafi').innerText = timings.asr_hanafi;
+    }
+    else {
+        document.getElementById('asr').removeAttribute('style');
+        document.getElementById('asr-both').setAttribute('style', 'display: none');
+        document.getElementById('asr').innerText = timings.asr || '';
+    }
+    document.getElementById('sunrise').innerText = timings.sunrise;
+    document.getElementById('dhuhr').innerText = timings.dhuhr;
+    document.getElementById('maghrib').innerText = timings.maghrib;
 }
 
 function clearTimings() {
