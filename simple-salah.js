@@ -62,7 +62,7 @@ function initAutocomplete() {
     autocomplete.addListener('place_changed', function() {
         let place = autocomplete.getPlace();
         if (!place.place_id) { 
-            alert('Error: please select from suggestions.'); 
+            alert('ERROR: Please select from Google suggestions. They take a few seconds to load.'); 
             return; 
         }
 
