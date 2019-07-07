@@ -58,7 +58,7 @@ function initAutocomplete() {
             return; 
         }
 
-        clearTimings(); //there's a delay before new timings load. During it, we want to display blank instead of incorrect timings.
+        replaceTimingsWithLoadingIcon(); //there's a delay before new timings load.
         document.getElementById('currLocationButton').click(); //close dropdown menu
 
         document.getElementById('location-input').value = '';
@@ -244,6 +244,21 @@ function redrawTimings(loc, dt, fajrIshaMethod, asrShafii, asrHanafi) {
 }
 
 function clearTimings() {
+    document.getElementById('fajr').innerHTML = '';
+    document.getElementById('fajr-15').innerHTML = '';
+    document.getElementById('fajr-18').innerHTML = '';
+    document.getElementById('sunrise').innerHTML = '';
+    document.getElementById('dhuhr').innerHTML = '';
+    document.getElementById('asr').innerHTML = '';
+    document.getElementById('asr-shafi').innerHTML = '';
+    document.getElementById('asr-hanafi').innerHTML = '';
+    document.getElementById('maghrib').innerHTML = '';
+    document.getElementById('isha').innerHTML = '';
+    document.getElementById('isha-15').innerHTML = '';
+    document.getElementById('isha-18').innerHTML = '';
+}
+
+function replaceTimingsWithLoadingIcon() {
     let loadingIcon = '<div class="spinner-grow spinner-grow-sm" role="status"><span class="sr-only">Loading...</span></div>';
     document.getElementById('fajr').innerHTML = loadingIcon;
     document.getElementById('fajr-15').innerHTML = loadingIcon;
