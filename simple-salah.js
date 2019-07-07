@@ -8,18 +8,24 @@ const methodsEnum = Object.freeze({
     'Karachi': 'Univ. of Islamic Sciences, Karachi',
     '15_18': 'Both 15° & 18°'
 });
+const defaultSettings = Object.freeze({
+    fajr_isha: 'ISNA', 
+    asr_shafii: true, 
+    asr_hanafi: false
+});
 
 function main() {
     setEventHandlers(); 
     drawMethodSettingsMenu();
     loadLastLocation();
-    loadSettings(); 
     redrawLocationsDropdown();
     removeObsoleteValues();
 }
 
 function setEventHandlers() {
     document.getElementById("clearAllLocs").onclick = clearAllLocations;
+    $('#settingsModal').on('show.bs.modal', loadSettings);
+    $('#settingsSaveButton').on('click', saveSettings);
 }
 
 function drawMethodSettingsMenu() {
@@ -31,7 +37,7 @@ function drawMethodSettingsMenu() {
         a.innerText = label;
         a.onclick = function() {
             dropdownButton.innerText = label; 
-            dropdownButton.setAttribute('data-settingFajrIsha', key);
+            dropdownButton.setAttribute('data-settingFajrIshaSelection', key);
         };
         a.setAttribute('class', 'dropdown-item');
         a.setAttribute('href', '#');
@@ -185,17 +191,39 @@ function loadSettings() {
     let settings = JSON.parse(localStorage.getItem(settingsKey));
 
     if (settings === null) {
-        settings = {fajr_isha: 'ISNA', asr_shafii: true, asr_hanafi: false};
+        settings = defaultSettings;
         localStorage.setItem(settingsKey, JSON.stringify(settings));
     }
 
     document.getElementById('fajrIshaDropdownButton').innerText = methodsEnum[settings.fajr_isha];
+    document.getElementById('fajrIshaDropdownButton').setAttribute('data-settingFajrIshaSelection', settings.fajr_isha);
     document.getElementById('setting_shafii').checked = settings.asr_shafii;
     document.getElementById('setting_hanafi').checked = settings.asr_hanafi;
 }
 
 function saveSettings() {
+    let settings = {
+        fajr_isha: document.getElementById('fajrIshaDropdownButton').getAttribute('data-settingFajrIshaSelection'),
+        asr_shafii: document.getElementById('setting_shafii').checked, 
+        asr_hanafi: document.getElementById('setting_hanafi').checked
+    }
+    if (!methodsEnum.hasOwnProperty(settings.fajr_isha)) {
+        settings.fajr_isha = defaultSettings.fajr_isha;
+    }
+    localStorage.setItem(settingsKey, JSON.stringify(settings));
+    $('#settingsModal').modal('hide');
+    displayAlert('Settings updated', 'success');
+    loadLastLocation();
+}
+
+function displayAlert(message, alertType) {
+    let alert = document.createElement('div');
+    alert.innerText = message;
+    alert.innerHTML += '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
     
+    alert.setAttribute('class', `alert alert-${alertType} fade show`);
+    document.getElementById('alertArea').appendChild(alert);
+    setTimeout(function(){ $(".alert").alert('close'); }, 3000);
 }
 
 function redrawLocationsDropdown() {
