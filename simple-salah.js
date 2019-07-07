@@ -244,15 +244,19 @@ function redrawTimings(loc, dt, fajrIshaMethod, asrShafii, asrHanafi) {
 }
 
 function clearTimings() {
-    document.getElementById('fajr-15').innerText = '';
-    document.getElementById('fajr-18').innerText = '';
-    document.getElementById('sunrise').innerText = '';
-    document.getElementById('dhuhr').innerText = '';
-    document.getElementById('asr-shafi').innerText = '';
-    document.getElementById('asr-hanafi').innerText = '';
-    document.getElementById('maghrib').innerText = '';
-    document.getElementById('isha-15').innerText = '';
-    document.getElementById('isha-18').innerText = '';
+    let loadingIcon = '<div class="spinner-grow spinner-grow-sm" role="status"><span class="sr-only">Loading...</span></div>';
+    document.getElementById('fajr').innerHTML = loadingIcon;
+    document.getElementById('fajr-15').innerHTML = loadingIcon;
+    document.getElementById('fajr-18').innerHTML = loadingIcon;
+    document.getElementById('sunrise').innerHTML = loadingIcon;
+    document.getElementById('dhuhr').innerHTML = loadingIcon;
+    document.getElementById('asr').innerHTML = loadingIcon;
+    document.getElementById('asr-shafi').innerHTML = loadingIcon;
+    document.getElementById('asr-hanafi').innerHTML = loadingIcon;
+    document.getElementById('maghrib').innerHTML = loadingIcon;
+    document.getElementById('isha').innerHTML = loadingIcon;
+    document.getElementById('isha-15').innerHTML = loadingIcon;
+    document.getElementById('isha-18').innerHTML = loadingIcon;
 }
 
 function loadLastLocation() {
