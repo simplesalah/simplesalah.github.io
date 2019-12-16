@@ -59,7 +59,7 @@ function drawMethodSettingsMenu() {
 
 function initAutocomplete() {
     let input = document.getElementById('location-input');
-    let autocomplete = new google.maps.places.Autocomplete(input, {placeIdOnly: true, types: ["(regions)"]});
+    let autocomplete = new google.maps.places.Autocomplete(input, {fields: ['place_id', 'name', 'types'], types: ["(regions)"]});
     let geocoder = new google.maps.Geocoder;
 
     autocomplete.addListener('place_changed', function() {
