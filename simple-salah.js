@@ -87,15 +87,17 @@ function initAutocomplete() {
         let lng = results[0].geometry.location.lng(); 
 
         //get timezone from Time Zone API 
-        fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=AIzaSyDDGqCMjZnysLB1EW4n8Ze2dOLkPPN6SjI`) //security note: accepting risk on hardcoded cred for now.
+        fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=AIzaSyDw6WD3hCxyQ4WpC6g_NUBF28Gg8s02h0k`)
             .then(function(response) {
                 return response.json();
             })
             .then(function(tzJson) {
                 //FIXME: add error handling for failed requests, like ACCESS_DENIED from GCP. (E.g. w/ misconfigured referrer restrictions.)
-                let tz = tzJson.timeZoneId;
-                let locIndex = addLocation(placeName, lat, lng, tz);
-                loadLocation(locIndex);
+                if (tzJson.timeZoneId) {
+                    let tz = tzJson.timeZoneId;
+                    let locIndex = addLocation(placeName, lat, lng, tz);
+                    loadLocation(locIndex);
+                }
             });
         });
     });
