@@ -105,6 +105,8 @@ function initAutocomplete() {
 
 /** Returns index of new item. */
 function addLocation(name, lat, lng, tz) {
+    if (!name || !lat || !lng || !tz) 
+        throw '[addLocation] missing input parameters';
     let locations = JSON.parse(localStorage.getItem(locationKey));
     if (locations === null) locations = []; 
     let locIndex = locations.push( {'name': name, 'lat': lat, 'lng': lng, 'tz': tz} ) - 1;
