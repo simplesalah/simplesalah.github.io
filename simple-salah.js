@@ -378,6 +378,7 @@ function createDropdownLoc(name, locIndex) {
     let locLink = document.createElement('a');
     locLink.appendChild(document.createTextNode(name));
     locLink.setAttribute('onclick', `loadLocation(${locIndex})`);
+    locLink.setAttribute('class', 'text-wrap');
 
     let dropdownItem = document.createElement('span');
     dropdownItem.appendChild(locLink);
