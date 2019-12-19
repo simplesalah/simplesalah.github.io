@@ -1,7 +1,3 @@
 .container {
   max-width: 320px;
 }
-
-.text-wrap {
-  word-wrap: break-word
-}
