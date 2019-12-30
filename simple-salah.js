@@ -39,6 +39,7 @@ function setEventHandlers() {
     $('#locationsDropdown').on('hidden.bs.dropdown', function () {
         document.getElementById('location-input').value = '';
     });
+    $('#autoDetectLoc').on('click', autoDetectLocation);
 }
 
 function drawMethodSettingsMenu() {
@@ -72,35 +73,29 @@ function initAutocomplete() {
 
         replaceTimingsWithLoadingIcon(); //there's a delay before new timings load.
         document.getElementById('currLocationButton').click(); //close dropdown menu
-
         document.getElementById('location-input').value = '';
 
         let placeName = place.name; 
 
         //get latitude & longitude from Geocoding API
-        geocoder.geocode({'placeId': place.place_id}, function (results, status) {
-        if (status !== 'OK') {
-            window.alert('Geocoder failed due to: ' + status);
-            return;
-        }
-        let lat = results[0].geometry.location.lat(); 
-        let lng = results[0].geometry.location.lng(); 
+        geocoder.geocode({'placeId': place.place_id}, async function (results, status) {
+            if (status !== 'OK') {
+                displayAlert(`Geocoder failed. Please contact support. Error status: "${status}"`);
+                return;
+            }
+            let lat = results[0].geometry.location.lat(); 
+            let lng = results[0].geometry.location.lng(); 
 
-        //get timezone from Time Zone API 
-        fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=AIzaSyDw6WD3hCxyQ4WpC6g_NUBF28Gg8s02h0k`)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(tzJson) {
-                //FIXME: add error handling for failed requests, like ACCESS_DENIED from GCP. (E.g. w/ misconfigured referrer restrictions.)
-                if (tzJson.timeZoneId) {
-                    let tz = tzJson.timeZoneId;
-                    let locIndex = addLocation(placeName, lat, lng, tz);
-                    loadLocation(locIndex);
-                }
-            });
+            let tz = await getTimezone(lat, lng); 
+            saveAndLoadLocation(placeName, lat, lng, tz); 
+
         });
     });
+}
+
+function saveAndLoadLocation(locationName, lat, lng, tz) {
+    let locIndex = addLocation(locationName, lat, lng, tz);
+    loadLocation(locIndex);
 }
 
 /** Returns index of new item. */
@@ -394,5 +389,53 @@ function removeObsoleteValues() {
     obsoleteCookies = ['city_name'];
     for (let i=0; i<obsoleteCookies.length; i++) {
         document.cookie = obsoleteCookies[i] +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+}
+
+async function getTimezone(lat, lng) {
+    let r = await fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=AIzaSyDw6WD3hCxyQ4WpC6g_NUBF28Gg8s02h0k`);
+    r = await r.json(); 
+    return r.timeZoneId; 
+    //TODO: should this have error handling for failed requests, like ACCESS_DENIED from GCP? (E.g. w/ misconfigured referrer restrictions.)
+}
+
+// Returns city name. Throws exception if unsuccessful.
+async function reverseGeocode(lat, lng) {
+    let r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCw-JUDOB05RMZutf7U62UOqtDaDA74CT0&result_type=locality`);
+    r = await r.json(); 
+    return r.results[0].formatted_address; //results could be empty..
+}
+
+// returns {name, lat, lng, tz}
+function autoDetectLocation() {
+
+    async function success(position) {
+        const lat  = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        let locationName; 
+        try {
+            locationName = await reverseGeocode(lat, lng); 
+        } catch {
+            locationName = `${lat}, ${lng}`; 
+        }
+
+        let tz = await getTimezone(lat, lng); 
+
+        saveAndLoadLocation(locationName, lat, lng, tz);
+    }
+
+    function error(e) {
+        displayAlert(`Unable to retrieve location. Error: "${e.message}"`, "danger");
+        loadLastLocation(); 
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(success, error);
+        document.getElementById('currLocationButton').innerText = "Detecting location...";
+        replaceTimingsWithLoadingIcon();
+    }
+    else {
+        displayAlert("Geolocation not supported on this browser.", "danger");
     }
 }
