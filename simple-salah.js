@@ -39,6 +39,7 @@ function setEventHandlers() {
     $('#locationsDropdown').on('hidden.bs.dropdown', function () {
         document.getElementById('location-input').value = '';
     });
+    $('#autoDetectLoc').on('click', autoDetectLocation);
 }
 
 function drawMethodSettingsMenu() {
@@ -394,5 +395,38 @@ function removeObsoleteValues() {
     obsoleteCookies = ['city_name'];
     for (let i=0; i<obsoleteCookies.length; i++) {
         document.cookie = obsoleteCookies[i] +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    }
+}
+
+// returns {name, lat, lng, tz}
+function autoDetectLocation() {
+
+    function success(position) {
+        const lat  = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCw-JUDOB05RMZutf7U62UOqtDaDA74CT0&result_type=locality`)
+        .then((r) => {
+            return r.json(); 
+        })
+        .then((r) => {
+            console.log(r);
+            console.log(r.results[0].formatted_address);
+        })
+        .catch((e) => {
+            console.log(`Error geocoding ${lat},${lng}. Reverting to lat/lng. Error: "${e}"`); 
+            console.log(`${lat}, ${lng}`);
+        });
+    }
+
+    function error(e) {
+        alert(`Unable to retrieve location. Error: "${e.message}"`);
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(success, error);
+    }
+    else {
+        alert("Geolocation not supported on this browser.")
     }
 }
