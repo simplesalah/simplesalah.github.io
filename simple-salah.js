@@ -79,26 +79,17 @@ function initAutocomplete() {
         let placeName = place.name; 
 
         //get latitude & longitude from Geocoding API
-        geocoder.geocode({'placeId': place.place_id}, function (results, status) {
-        if (status !== 'OK') {
-            window.alert('Geocoder failed due to: ' + status);
-            return;
-        }
-        let lat = results[0].geometry.location.lat(); 
-        let lng = results[0].geometry.location.lng(); 
+        geocoder.geocode({'placeId': place.place_id}, async function (results, status) {
+            if (status !== 'OK') {
+                window.alert('Geocoder failed due to: ' + status);
+                return;
+            }
+            let lat = results[0].geometry.location.lat(); 
+            let lng = results[0].geometry.location.lng(); 
 
-        //get timezone from Time Zone API 
-        fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=AIzaSyDw6WD3hCxyQ4WpC6g_NUBF28Gg8s02h0k`)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(tzJson) {
-                //FIXME: add error handling for failed requests, like ACCESS_DENIED from GCP. (E.g. w/ misconfigured referrer restrictions.)
-                if (tzJson.timeZoneId) {
-                    let tz = tzJson.timeZoneId;
-                    saveAndLoadLocation(placeName, lat, lng, tz);
-                }
-            });
+            let tz = await getTimezone(lat, lng); 
+            saveAndLoadLocation(placeName, lat, lng, tz); 
+
         });
     });
 }
