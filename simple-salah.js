@@ -401,32 +401,37 @@ function removeObsoleteValues() {
 // returns {name, lat, lng, tz}
 function autoDetectLocation() {
 
-    function success(position) {
+    async function success(position) {
         const lat  = position.coords.latitude;
         const lng = position.coords.longitude;
 
-        fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCw-JUDOB05RMZutf7U62UOqtDaDA74CT0&result_type=locality`)
-        .then((r) => {
-            return r.json(); 
-        })
-        .then((r) => {
-            console.log(r);
-            console.log(r.results[0].formatted_address);
-        })
-        .catch((e) => {
-            console.log(`Error geocoding ${lat},${lng}. Reverting to lat/lng. Error: "${e}"`); 
-            console.log(`${lat}, ${lng}`);
-        });
+        let locationName = `${lat}, ${lng}`; 
+
+        try {
+            let r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCw-JUDOB05RMZutf7U62UOqtDaDA74CT0&result_type=locality`);
+            r = await r.json(); 
+
+            if (r.status === 'OK') {
+                locationName = r.results[0].formatted_address; 
+            }
+        } 
+        catch {} //just keep using lat/lng 
+        
+
+        // save and load location 
     }
 
     function error(e) {
-        alert(`Unable to retrieve location. Error: "${e.message}"`);
+        displayAlert(`Unable to retrieve location. Error: "${e.message}"`, "danger");
+        loadLastLocation(); 
     }
 
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(success, error);
+        document.getElementById('currLocationButton').innerText = "Detecting location...";
+        replaceTimingsWithLoadingIcon();
     }
     else {
-        alert("Geolocation not supported on this browser.")
+        displayAlert("Geolocation not supported on this browser.", "danger");
     }
 }
