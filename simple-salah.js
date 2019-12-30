@@ -96,12 +96,16 @@ function initAutocomplete() {
                 //FIXME: add error handling for failed requests, like ACCESS_DENIED from GCP. (E.g. w/ misconfigured referrer restrictions.)
                 if (tzJson.timeZoneId) {
                     let tz = tzJson.timeZoneId;
-                    let locIndex = addLocation(placeName, lat, lng, tz);
-                    loadLocation(locIndex);
+                    saveAndLoadLocation(placeName, lat, lng, tz);
                 }
             });
         });
     });
+}
+
+function saveAndLoadLocation(locationName, lat, lng, tz) {
+    let locIndex = addLocation(locationName, lat, lng, tz);
+    loadLocation(locIndex);
 }
 
 /** Returns index of new item. */
@@ -398,6 +402,20 @@ function removeObsoleteValues() {
     }
 }
 
+async function getTimezone(lat, lng) {
+    let r = await fetch(`https://maps.googleapis.com/maps/api/timezone/json?location=${lat},${lng}&timestamp=${Math.round(new Date()/1000)}&key=AIzaSyDw6WD3hCxyQ4WpC6g_NUBF28Gg8s02h0k`);
+    r = await r.json(); 
+    return r.timeZoneId; 
+    //TODO: should this have error handling for failed requests, like ACCESS_DENIED from GCP? (E.g. w/ misconfigured referrer restrictions.)
+}
+
+// Returns city name. Throws exception if unsuccessful.
+async function reverseGeocode(lat, lng) {
+    let r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCw-JUDOB05RMZutf7U62UOqtDaDA74CT0&result_type=locality`);
+    r = await r.json(); 
+    return r.results[0].formatted_address; //results could be empty..
+}
+
 // returns {name, lat, lng, tz}
 function autoDetectLocation() {
 
@@ -405,20 +423,16 @@ function autoDetectLocation() {
         const lat  = position.coords.latitude;
         const lng = position.coords.longitude;
 
-        let locationName = `${lat}, ${lng}`; 
-
+        let locationName; 
         try {
-            let r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCw-JUDOB05RMZutf7U62UOqtDaDA74CT0&result_type=locality`);
-            r = await r.json(); 
+            locationName = await reverseGeocode(lat, lng); 
+        } catch {
+            locationName = `${lat}, ${lng}`; 
+        }
 
-            if (r.status === 'OK') {
-                locationName = r.results[0].formatted_address; 
-            }
-        } 
-        catch {} //just keep using lat/lng 
-        
+        let tz = await getTimezone(lat, lng); 
 
-        // save and load location 
+        saveAndLoadLocation(locationName, lat, lng, tz);
     }
 
     function error(e) {
