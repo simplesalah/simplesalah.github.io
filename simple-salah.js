@@ -406,7 +406,6 @@ async function reverseGeocode(lat, lng) {
     return r.results[0].formatted_address; //results could be empty..
 }
 
-// returns {name, lat, lng, tz}
 function autoDetectLocation() {
 
     async function success(position) {
