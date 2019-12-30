@@ -434,7 +434,7 @@ function autoDetectLocation() {
 
     function error(e) {
         if (e.code === 1) {
-            displayAlert(`Permission denied. Please enable geolocation in your settings.`, 'danger', 10000);
+            displayAlert(`Permission denied. Please enable geolocation in your settings.`, 'danger', 60000);
         }
         else {
             displayAlert(`Unable to retrieve location. Error: "${e.message}"`, 'danger', 10000);
