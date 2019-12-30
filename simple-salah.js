@@ -73,7 +73,6 @@ function initAutocomplete() {
 
         replaceTimingsWithLoadingIcon(); //there's a delay before new timings load.
         document.getElementById('currLocationButton').click(); //close dropdown menu
-
         document.getElementById('location-input').value = '';
 
         let placeName = place.name; 
@@ -81,7 +80,7 @@ function initAutocomplete() {
         //get latitude & longitude from Geocoding API
         geocoder.geocode({'placeId': place.place_id}, async function (results, status) {
             if (status !== 'OK') {
-                window.alert('Geocoder failed due to: ' + status);
+                displayAlert(`Geocoder failed. Please contact support. Error status: "${status}"`);
                 return;
             }
             let lat = results[0].geometry.location.lat(); 
