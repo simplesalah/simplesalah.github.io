@@ -362,7 +362,7 @@ function createDropdownLoc(name, locIndex) {
     locIndex = parseInt(locIndex); //XSS protection
 
     let removeButtonIcon = document.createElement('span');
-    removeButtonIcon.setAttribute('class', 'fas fa-minus-circle');
+    removeButtonIcon.setAttribute('class', 'fas fa-times');
 
     let removeButton = document.createElement('span');
     removeButton.setAttribute('style', 'color: Tomato;');
