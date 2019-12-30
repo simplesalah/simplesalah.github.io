@@ -291,6 +291,7 @@ function loadLastLocation() {
         lastLocationIndex = parseInt(lastLocationIndex);
         loadLocation(lastLocationIndex);
     }
+    return lastLocationIndex; 
 }
 
 function loadSettings() {
@@ -322,14 +323,17 @@ function saveSettings() {
     loadLastLocation();
 }
 
-function displayAlert(message, alertType) {
+function displayAlert(message, alertType, timeLength) {
+    if (!timeLength) timeLength = 3000; 
+
     let alert = document.createElement('div');
     alert.innerText = message;
     alert.innerHTML += '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
     
     alert.setAttribute('class', `alert alert-${alertType} fade show`);
     document.getElementById('alertArea').appendChild(alert);
-    setTimeout(function(){ $(".alert").alert('close'); }, 3000);
+
+    setTimeout(function(){ $(".alert").alert('close'); }, timeLength);
 }
 
 function redrawLocationsDropdown() {
@@ -343,13 +347,17 @@ function redrawLocationsDropdown() {
     }
 }
 
+function clearLoadedCity() {
+    document.getElementById('currLocationButton').innerText = 'Select location';
+    document.getElementById('timeCalculated').innerText = '';
+    clearTimings();
+}
+
 function clearAllLocations() {
     localStorage.removeItem(locationKey);
     localStorage.removeItem(lastLocationKey);
     document.getElementById('locationDropdownElements').innerHTML = '';
-    document.getElementById('currLocationButton').innerText = 'Select location';
-    document.getElementById('timeCalculated').innerText = '';
-    clearTimings();
+    clearLoadedCity(); 
 }
 
 function addDropdownLoc(name, locIndex) {
@@ -425,8 +433,16 @@ function autoDetectLocation() {
     }
 
     function error(e) {
-        displayAlert(`Unable to retrieve location. Error: "${e.message}"`, "danger");
-        loadLastLocation(); 
+        if (e.code === 1) {
+            displayAlert(`Permission denied. Please enable geolocation in your settings.`, 'danger', 10000);
+        }
+        else {
+            displayAlert(`Unable to retrieve location. Error: "${e.message}"`, 'danger', 10000);
+        }
+        let loadedIndex = loadLastLocation();
+        if (loadedIndex === null) {
+            clearLoadedCity(); 
+        }
     }
 
     if (navigator.geolocation) {
