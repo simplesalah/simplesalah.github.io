@@ -331,9 +331,11 @@ function displayAlert(message, alertType, timeLength) {
     alert.innerHTML += '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>';
     
     alert.setAttribute('class', `alert alert-${alertType} fade show`);
+    let alertId = `alert-${+ new Date()}`;
+    alert.setAttribute('id', alertId);
     document.getElementById('alertArea').appendChild(alert);
 
-    setTimeout(function(){ $(".alert").alert('close'); }, timeLength);
+    setTimeout(function(){ $(`#${alertId}`).alert('close'); }, timeLength);
 }
 
 function redrawLocationsDropdown() {
