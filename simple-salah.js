@@ -24,7 +24,7 @@ function main() {
     removeObsoleteValues();
 
     let locations = JSON.parse(localStorage.getItem(locationKey));
-    if (locations === null || locations === []) {
+    if ( locations === null || (locations instanceof Array && locations.length === 0) ) {
         $('#currLocationButton').dropdown('toggle');
     }
 }
